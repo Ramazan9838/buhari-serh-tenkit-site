@@ -1,12 +1,12 @@
 {
  "surum": "v34.19",
- "guncelleme": "2026-10-03T17:22:44+00:00",
+ "guncelleme": "2026-10-03T17:35:35+00:00",
  "yuvalar": [
   {
    "kullanici": "Admin",
-   "salt": "vN2Jd6EgJNunhzgt4Y6qtw==",
+   "salt": "mXEwRZ4HXk7WTa2RKtUmrQ==",
    "iter": 600000,
-   "w": "gFQn52deMmzcrRoqPEQlZQNRf+DT0PFPtjPv68YG3rXXerElJbBTlO35LErn8PVgc64sKr4pdcG+kIM0"
+   "w": "d1FbSbpQLxn0XBffDuJp/i3r9nptKfsiXPPLSri92pfhJnZLFzNQPywHA77ZfCjs3yx50RT6sw3yxhhU"
   }
  ],
  "dosyalar": {
