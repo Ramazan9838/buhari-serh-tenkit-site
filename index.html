@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Buhârî Şerh Literatüründe Tenkit</title>
+<style>
+/* Giriş sayfası: sitenin şifreli kopyasını açar. Şifre çözme yalnız tarayıcıda yapılır. */
+:root {
+  color-scheme: light;
+  --bg: #f3f2ee; --paper: #fcfcfb; --ink: #1c2422; --ink-2: #4f5754; --line: #cfccc3;
+  --accent: #1f5c4b; --accent-2: #2a7a64; --bad: #b3261e; --focus: #2a78d6;
+  --shadow: 0 1px 2px rgba(20,30,25,.06), 0 10px 30px rgba(20,30,25,.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121412; --paper: #1a1a19; --ink: #eceee9; --ink-2: #c3c2b7; --line: #3d403b;
+    --accent: #6cc2a3; --accent-2: #86d4b7; --bad: #ff8a80; --focus: #6da7ec;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif; }
+#giris { min-height: 100%; display: grid; place-items: center; padding: 24px 16px; }
+.kart { width: 100%; max-width: 380px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 28px 24px; }
+h1 { font-size: 19px; margin: 0 0 4px; line-height: 1.3; }
+.alt { color: var(--ink-2); font-size: 13.5px; margin: 0 0 22px; }
+label { display: block; font-size: 13px; font-weight: 600; margin: 14px 0 6px; }
+input { width: 100%; font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+input:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
+button { width: 100%; margin-top: 20px; font: inherit; font-weight: 600; color: #fff; background: var(--accent); border: 0; border-radius: 8px; padding: 11px 12px; cursor: pointer; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) button { color: #10201a; } }
+button:hover { background: var(--accent-2); }
+button:disabled { opacity: .6; cursor: progress; }
+#durum { min-height: 22px; margin: 14px 0 0; font-size: 13.5px; color: var(--ink-2); }
+#durum.hata { color: var(--bad); }
+.not { margin: 18px 0 0; font-size: 12px; color: var(--ink-2); }
+#site { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: none; background: #fff; }
+#paketDurum { position: fixed; right: 16px; bottom: 16px; z-index: 10; display: none; max-width: calc(100% - 32px);
+  background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); padding: 10px 14px; font-size: 13px; }
+</style>
+</head>
+<body>
+<main id="giris">
+  <form class="kart" id="form" autocomplete="on">
+    <h1>Buhârî Şerh Literatüründe Tenkit</h1>
+    <p class="alt">Araştırma sistemi · yalnız yetkili giriş</p>
+    <label for="kullanici">Kullanıcı adı</label>
+    <input id="kullanici" name="username" autocomplete="username" value="Admin" required>
+    <label for="sifre">Şifre</label>
+    <input id="sifre" name="password" type="password" autocomplete="current-password" required autofocus>
+    <button id="gir" type="submit">Giriş</button>
+    <p id="durum" role="status" aria-live="polite"></p>
+    <p class="not">Sayfanın içeriği şifrelidir; şifre çözme bu tarayıcıda yapılır, şifre hiçbir yere gönderilmez.</p>
+  </form>
+</main>
+<iframe id="site" title="Araştırma sistemi"></iframe>
+<div id="paketDurum" role="status" aria-live="polite"></div>
+<script>
+(function () {
+  'use strict';
+  var OTURUM = 'bst.oturum';
+  var enc = new TextEncoder();
+  var kasa = null, anahtar = null, paketIs = null;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function b64(s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+  function durum(t, hata) { var d = $('durum'); d.textContent = t || ''; d.className = hata ? 'hata' : ''; }
+
+  function kasaGetir() {
+    if (kasa) return Promise.resolve(kasa);
+    return fetch('kasa.json', { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('kasa.json okunamadı (' + r.status + ')');
+      return r.json();
+    }).then(function (k) { kasa = k; return k; });
+  }
+
+  // Şifreden anahtar türetilir (PBKDF2-SHA256), yuvadaki veri anahtarı onunla açılır (AES-GCM).
+  function yuvaAc(kullanici, sifre) {
+    var ad = kullanici.trim().toLocaleLowerCase('tr');
+    var y = kasa.yuvalar.filter(function (x) { return x.kullanici.toLocaleLowerCase('tr') === ad; })[0];
+    if (!y) return Promise.reject(new Error('giris'));
+    return crypto.subtle.importKey('raw', enc.encode(sifre), 'PBKDF2', false, ['deriveKey']).then(function (k) {
+      return crypto.subtle.deriveKey({ name: 'PBKDF2', hash: 'SHA-256', salt: b64(y.salt), iterations: y.iter },
+        k, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    }).then(function (kek) {
+      var w = b64(y.w);
+      return crypto.subtle.decrypt({ name: 'AES-GCM', iv: w.slice(0, 12), additionalData: enc.encode('bst-yuva:' + y.kullanici) }, kek, w.slice(12));
+    }).catch(function () { throw new Error('giris'); });
+  }
+
+  function anahtarKur(ham) {
+    return crypto.subtle.importKey('raw', ham, 'AES-GCM', false, ['decrypt']).then(function (k) { anahtar = k; return k; });
+  }
+
+  // Bir dosyanın şifreli parçaları indirilir, çözülür, birleştirilir ve gzip açılır.
+  function dosyaAc(ad, ilerleme) {
+    var d = kasa.dosyalar[ad], parcalar = [], bitti = 0;
+    return Promise.all(d.parcalar.map(function (yol, i) {
+      return fetch(yol).then(function (r) {
+        if (!r.ok) throw new Error(yol + ' indirilemedi (' + r.status + ')');
+        return r.arrayBuffer();
+      }).then(function (buf) {
+        var u = new Uint8Array(buf);
+        return crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.slice(0, 12), additionalData: enc.encode('bst-parca:' + ad + ':' + i) }, anahtar, u.slice(12));
+      }).then(function (acik) {
+        parcalar[i] = acik; bitti++;
+        if (ilerleme) ilerleme(bitti, d.parcalar.length);
+      });
+    })).then(function () {
+      var akis = new Blob(parcalar).stream().pipeThrough(new DecompressionStream('gzip'));
+      return new Response(akis).text();
+    });
+  }
+
+  function paketDurum(t) { var p = $('paketDurum'); p.textContent = t || ''; p.style.display = t ? 'block' : 'none'; }
+
+  // Site kaynak paketini istediğinde (bkz. derlemedeki spLoadScript yaması) çağrılır.
+  window.__bstPaket = function (hedef) {
+    if (!paketIs) {
+      paketDurum('Kaynak paketi indiriliyor…');
+      paketIs = dosyaAc('paket', function (n, t) { paketDurum('Kaynak paketi indiriliyor… ' + n + '/' + t); }).then(function (metin) {
+        paketDurum('Kaynak paketi açılıyor…');
+        var json = metin.slice(metin.indexOf('{'), metin.lastIndexOf('}') + 1);
+        return JSON.parse(json);
+      });
+      paketIs.then(function () { paketDurum(''); }, function (e) {
+        paketDurum('Kaynak paketi açılamadı: ' + (e && e.message || e)); paketIs = null;
+      });
+    }
+    return paketIs.then(function (P) {
+      hedef.__v34SrcPack = Object.assign(hedef.__v34SrcPack || {}, P);
+      return true;
+    }, function () { return false; });
+  };
+
+  function siteAc() {
+    durum('Site açılıyor…');
+    return dosyaAc('site').then(function (html) {
+      var url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+      var f = $('site');
+      f.addEventListener('load', function () {
+        try { if (f.contentDocument && f.contentDocument.title) document.title = f.contentDocument.title; } catch (e) {}
+      });
+      f.src = url;
+      f.style.display = 'block';
+      $('giris').style.display = 'none';
+    });
+  }
+
+  function hata(e) {
+    $('gir').disabled = false;
+    if (e && e.message === 'giris') durum('Kullanıcı adı veya şifre yanlış.', true);
+    else durum('Açılamadı: ' + (e && e.message || e), true);
+  }
+
+  $('form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    $('gir').disabled = true;
+    durum('Şifre doğrulanıyor…');
+    kasaGetir().then(function () {
+      return yuvaAc($('kullanici').value, $('sifre').value);
+    }).then(function (ham) {
+      // Oturum anahtarı yalnız bu sekme açıkken saklanır; sekme kapanınca silinir.
+      try { sessionStorage.setItem(OTURUM, btoa(String.fromCharCode.apply(null, new Uint8Array(ham)))); } catch (e) {}
+      $('sifre').value = '';
+      return anahtarKur(ham);
+    }).then(siteAc).catch(hata);
+  });
+
+  // Aynı sekmede yeniden yüklemede şifre tekrar sorulmaz.
+  var kayit = null;
+  try { kayit = sessionStorage.getItem(OTURUM); } catch (e) {}
+  if (kayit) {
+    $('gir').disabled = true;
+    durum('Oturum açılıyor…');
+    kasaGetir().then(function () { return anahtarKur(b64(kayit)); }).then(siteAc).catch(function (e) {
+      try { sessionStorage.removeItem(OTURUM); } catch (x) {}
+      $('gir').disabled = false; durum('');
+    });
+  }
+})();
+</script>
+</body>
+</html>

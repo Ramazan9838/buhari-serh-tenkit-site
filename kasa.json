@@ -1,0 +1,30 @@
+{
+ "surum": "v34.19",
+ "guncelleme": "2026-10-03T17:22:44+00:00",
+ "yuvalar": [
+  {
+   "kullanici": "Admin",
+   "salt": "vN2Jd6EgJNunhzgt4Y6qtw==",
+   "iter": 600000,
+   "w": "gFQn52deMmzcrRoqPEQlZQNRf+DT0PFPtjPv68YG3rXXerElJbBTlO35LErn8PVgc64sKr4pdcG+kIM0"
+  }
+ ],
+ "dosyalar": {
+  "site": {
+   "ozet": "c07648149fa98d105be7cf12bb3073e213833b3bcc937049663481c7e8edc67f",
+   "boyut": 18504591,
+   "parcalar": [
+    "veri/site.c07648149fa9.0.bin"
+   ]
+  },
+  "paket": {
+   "ozet": "5c616fd870c5fd878e6df3fc9e0cada8a519b076d7082ff64a6d2989a1e562bb",
+   "boyut": 112359288,
+   "parcalar": [
+    "veri/paket.5c616fd870c5.0.bin",
+    "veri/paket.5c616fd870c5.1.bin",
+    "veri/paket.5c616fd870c5.2.bin"
+   ]
+  }
+ }
+}
