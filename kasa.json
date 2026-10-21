@@ -1,6 +1,6 @@
 {
-  "surum": "buhari-ux-d8b879ca8bb1",
-  "guncelleme": "2026-10-21T09:47:22.156225+00:00",
+  "surum": "buhari-ux-3c48d26e9566",
+  "guncelleme": "2026-10-21T21:29:12.543297+00:00",
   "yuvalar": [
     {
       "kullanici": "Admin",
@@ -11,10 +11,10 @@
   ],
   "dosyalar": {
     "site": {
-      "ozet": "1d8475860d56ceed02017cc2a25f81725f81abe168cc2e6349846d14ac94b7b0",
-      "boyut": 18521843,
+      "ozet": "ebdd7bbc4d67130801632a4b5b669266308c4ff60d675f401a4bce7c29a463cf",
+      "boyut": 18529846,
       "parcalar": [
-        "veri/site.1d8475860d56.0.bin"
+        "veri/site.ebdd7bbc4d67.0.bin"
       ]
     },
     "paket": {
